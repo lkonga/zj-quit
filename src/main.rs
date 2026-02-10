@@ -46,8 +46,6 @@ impl Action {
 }
 
 struct State {
-    confirm_key: KeyWithModifier,
-    cancel_key: KeyWithModifier,
     action: Action,
     /// The pane that was focused before the plugin opened (for ClosePane action)
     target_pane_id: Option<PaneId>,
@@ -60,14 +58,17 @@ struct State {
 impl Default for State {
     fn default() -> Self {
         Self {
-            confirm_key: KeyWithModifier::new(BareKey::Enter),
-            cancel_key: KeyWithModifier::new(BareKey::Esc),
             action: Action::default(),
             target_pane_id: None,
             target_tab_index: None,
             pane_info_received: false,
         }
     }
+}
+
+/// Check if a key is 'y' or 'Y' (confirm), following [y/N] CLI convention
+fn is_confirm(key: &KeyWithModifier) -> bool {
+    matches!(key.bare_key, BareKey::Char('y') | BareKey::Char('Y'))
 }
 
 register_plugin!(State);
@@ -80,16 +81,6 @@ impl ZellijPlugin for State {
         ]);
         subscribe(&[EventType::Key, EventType::PaneUpdate, EventType::TabUpdate]);
 
-        // Parse confirm key
-        if let Some(confirm_key) = configuration.get("confirm_key") {
-            self.confirm_key = confirm_key.parse().unwrap_or(self.confirm_key.clone());
-        }
-
-        // Parse cancel key
-        if let Some(abort_key) = configuration.get("cancel_key") {
-            self.cancel_key = abort_key.parse().unwrap_or(self.cancel_key.clone());
-        }
-
         // Parse action from configuration
         if let Some(action_str) = configuration.get("action") {
             self.action = Action::from_config(action_str);
@@ -99,9 +90,10 @@ impl ZellijPlugin for State {
     fn update(&mut self, event: Event) -> bool {
         match event {
             Event::Key(key) => {
-                if self.confirm_key == key {
+                if is_confirm(&key) {
                     self.execute_action();
-                } else if self.cancel_key == key {
+                } else {
+                    // Any key other than y/Y cancels (following [y/N] convention)
                     hide_self();
                 }
             }
@@ -196,24 +188,15 @@ impl ZellijPlugin for State {
             );
         }
 
-        // Help text at bottom
-        let help_text = format!(
-            "Help: <{}> - Confirm, <{}> - Cancel",
-            self.confirm_key, self.cancel_key,
-        );
+        // Help text at bottom - [y/N] convention
+        let help_text = "[y/N]";
         let help_text_y_location = rows - 1;
         let help_text_x_location = cols.saturating_sub(help_text.chars().count()) / 2;
 
-        let confirm_key_length = self.confirm_key.to_string().chars().count();
-        let abort_key_length = self.cancel_key.to_string().chars().count();
-
         print_text_with_coordinates(
             Text::new(help_text)
-                .color_range(3, 6..8 + confirm_key_length)
-                .color_range(
-                    3,
-                    20 + confirm_key_length..22 + confirm_key_length + abort_key_length,
-                ),
+                .color_range(3, 1..2) // 'y' in color
+                .color_range(0, 3..4), // 'N' in different color
             help_text_x_location,
             help_text_y_location,
             None,
