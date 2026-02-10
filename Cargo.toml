@@ -1,8 +1,13 @@
 [package]
 name = "zj-quit"
-version = "0.3.1"
-authors = ["Cristian Dominguez"]
-edition = "2018"
+version = "0.4.0"
+authors = ["Cristian Dominguez", "lkonga"]
+edition = "2021"
+description = "Zellij plugin for confirming quit session, close pane, and close tab actions"
 
 [dependencies]
-zellij-tile = "0.41.1"
+zellij-tile = "0.42.2"
+
+[profile.release]
+opt-level = "s"
+lto = true
