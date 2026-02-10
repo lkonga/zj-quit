@@ -154,40 +154,6 @@ impl ZellijPlugin for State {
             None,
         );
 
-        // Show target info for pane/tab close
-        let target_info = match self.action {
-            Action::ClosePane => {
-                if let Some(pane_id) = &self.target_pane_id {
-                    match pane_id {
-                        PaneId::Terminal(id) => format!("Target: Terminal pane #{}", id),
-                        PaneId::Plugin(id) => format!("Target: Plugin pane #{}", id),
-                    }
-                } else {
-                    "Target: (detecting...)".to_string()
-                }
-            }
-            Action::CloseTab => {
-                if let Some(tab_idx) = self.target_tab_index {
-                    format!("Target: Tab #{}", tab_idx + 1)
-                } else {
-                    "Target: (detecting...)".to_string()
-                }
-            }
-            Action::QuitSession => String::new(),
-        };
-
-        if !target_info.is_empty() {
-            let info_y = (rows / 2) + 1;
-            let info_x = cols.saturating_sub(target_info.chars().count()) / 2;
-            print_text_with_coordinates(
-                Text::new(target_info).color_range(1, 0..7), // Color "Target:" prefix
-                info_x,
-                info_y,
-                None,
-                None,
-            );
-        }
-
         // Help text at bottom - [y/N] convention
         let help_text = "[y/N]";
         let help_text_y_location = rows - 1;
