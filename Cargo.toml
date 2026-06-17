@@ -6,7 +6,7 @@ edition = "2021"
 description = "Zellij plugin for confirming quit session, close pane, and close tab actions"
 
 [dependencies]
-zellij-tile = "0.42.2"
+zellij-tile = "0.44.2"
 
 [profile.release]
 opt-level = "s"
